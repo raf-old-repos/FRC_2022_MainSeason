@@ -6,6 +6,7 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 
+import com.revrobotics.SparkMaxPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
@@ -23,6 +24,9 @@ public class Drivetrain extends SubsystemBase{
     private final CANSparkMax leftMotor1 = new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless);
     private final CANSparkMax leftMotor2 = new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless);
     private final CANSparkMax leftMotor3 = new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless);
+
+    private SparkMaxPIDController rightPIDController;
+    private SparkMaxPIDController leftPIDController;
 
     public final MotorControllerGroup leftMotors = new MotorControllerGroup(
         leftMotor1, leftMotor2, leftMotor3
@@ -68,6 +72,26 @@ public class Drivetrain extends SubsystemBase{
         rightMotor2.setIdleMode(IdleMode.kBrake);
         rightMotor3.setIdleMode(IdleMode.kBrake);
 
+        this.leftMotor1.follow(leftMotor2);
+        this.leftMotor3.follow(leftMotor2);
+
+        this.rightMotor1.follow(rightMotor2);
+        this.rightMotor3.follow(rightMotor2);
+
+
+        // temp
+        this.leftPIDController = this.leftMotor2.getPIDController();
+        this.rightPIDController = this.rightMotor2.getPIDController();
+
+        this.leftPIDController.setP(Constants.Drivetrain.kP);
+        this.leftPIDController.setI(Constants.Drivetrain.kI);
+        this.leftPIDController.setD(Constants.Drivetrain.kD);
+
+        this.rightPIDController.setP(Constants.Drivetrain.kP);
+        this.rightPIDController.setI(Constants.Drivetrain.kI);
+        this.rightPIDController.setD(Constants.Drivetrain.kD);
+
+
         // Sets the distance per pulse to the pre-defined constant we calculated for both encoders.
         rightEncoder.setPositionConversionFactor(Constants.Trajectory.kDistPerRot);
         leftEncoder.setPositionConversionFactor(Constants.Trajectory.kDistPerRot);
@@ -75,6 +99,12 @@ public class Drivetrain extends SubsystemBase{
         resetEncoders();
         
         odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
+
+
+
+
+
+
 
         //initDefaultCommand(driverController);
     }
@@ -94,6 +124,13 @@ public class Drivetrain extends SubsystemBase{
     public Pose2d getPose() {
         return odometry.getPoseMeters();
     }
+
+    // temp
+    public void setPosition(double displacement) {
+        this.leftPIDController.setReference(displacement, CANSparkMax.ControlType.kPosition);
+        this.rightPIDController.setReference(displacement, CANSparkMax.ControlType.kPosition);
+    }
+
 
     // Returns the current speed of the wheels of the robot.
     public DifferentialDriveWheelSpeeds getWheelSpeeds() { 

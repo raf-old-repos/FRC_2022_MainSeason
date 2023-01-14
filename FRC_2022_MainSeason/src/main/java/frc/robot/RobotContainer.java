@@ -9,7 +9,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import frc.robot.commands.GyroZero;
 import frc.robot.commands.MoveForward;
 import frc.robot.commands.OneBallAuto;
 import frc.robot.commands.TwoBallAuto;
@@ -28,7 +30,9 @@ import frc.robot.subsystems.turret.commands.ActiveLaunchTrajectory;
 import frc.robot.subsystems.turret.commands.LowHubShoot;
 import frc.robot.subsystems.turret.commands.UpperHubShoot;
 import frc.robot.subsystems.turret.commands.ZeroPitch;
+import frc.robot.util.GridAlign;
 import frc.robot.util.XboxController;
+import frc.robot.util.XboxController.Button;
 
 public class RobotContainer {
   private RobotContainer m_robotContainer;
@@ -46,6 +50,7 @@ public class RobotContainer {
   public final Turret turret = new Turret();
   private final Climber climber = new Climber();
   private final Intake intake = new Intake();
+  private final GridAlign align = new GridAlign();
   // private AddressableLEDs m_AddressableLEDs = new AddressableLEDs();
 
   /*   Autonomous Trajectory   */
@@ -61,10 +66,15 @@ public class RobotContainer {
   public RobotContainer() {
     this.configureButtonBindings();
 
+    SmartDashboard.putNumberArray("llpython", this.align.values);
+
+   
+
     // A split-stick arcade command, with forward/backward controlled by the left hand, and turning controlled by the right.
     this.drivetrain.setDefaultCommand(new RunCommand(
       () -> this.drivetrain.arcadeDrive(driverController.getAxisValue(XboxController.Axis.LEFT_Y), driverController.getAxisValue(XboxController.Axis.RIGHT_X)),
     drivetrain));
+
 
     indexer.setDefaultCommand(new RunCommand(() -> {
       indexer.setPower(Math.signum(manipulatorController.getAxisValue(XboxController.Axis.RIGHT_Y)));
@@ -74,7 +84,7 @@ public class RobotContainer {
       intake.setPower(Math.signum((manipulatorController.getAxisValue(XboxController.Axis.RIGHT_TRIGGER))));
     }, intake));
 
-    climber.setDefaultCommand(new ManualClimber(manipulatorController, climber));
+   // climber.setDefaultCommand(new ManualClimber(manipulatorController, climber));
 
     turret.setDefaultCommand(new ActiveLaunchTrajectory(turret));
 
@@ -99,6 +109,10 @@ public class RobotContainer {
       return drivetrain.getHeading() + (turret.limelight.hasTarget() ? turret.limelight.yawOffset() : 0);
     }));
 
+    driverController.whenPressed(Button.Y, new GyroZero());
+
+    
+
     manipulatorController.whenPressed(XboxController.Button.B, new InstantCommand(intake::toggleDeploy));
 
     manipulatorController.whileHeld(XboxController.Button.RIGHT_BUMPER, new UpperHubShoot(turret));
@@ -107,8 +121,8 @@ public class RobotContainer {
     // manipulatorController.whenPressed(XboxController.Button.A, new ResetClimber(climber, climber.climberMotor1));
     // manipulatorController.whenPressed(XboxController.Button.B, new ResetClimber(climber, climber.climberMotor2));
 
-    manipulatorController.whenPressed(XboxController.Button.Y, new InstantCommand(climber :: setEncoderPosition));
-    manipulatorController.whenPressed(XboxController.POV.DOWN, new InstantCommand(climber :: setEncoderPosition));
+    //manipulatorController.whenPressed(XboxController.Button.Y, new InstantCommand(climber :: setEncoderPosition));
+    //manipulatorController.whenPressed(XboxController.POV.DOWN, new InstantCommand(climber :: setEncoderPosition));
   }
 
   public Command getAutonomousCommand() {
